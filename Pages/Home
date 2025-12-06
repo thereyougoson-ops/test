@@ -1,0 +1,58 @@
+import React, { useRef } from 'react';
+import Interactive3DBackground from '../components/sokoloff/Interactive3DBackground';
+import HeroSection from '../components/sokoloff/HeroSection';
+import AboutSection from '../components/sokoloff/AboutSection';
+import ChronologySection from '../components/sokoloff/ChronologySection';
+import TimelineSection from '../components/sokoloff/TimelineSection';
+import InteractiveGallery from '../components/sokoloff/InteractiveGallery';
+import MapSection from '../components/sokoloff/MapSection';
+import FullBiographySection from '../components/sokoloff/FullBiographySection';
+import BiographySection from '../components/sokoloff/BiographySection';
+import FooterSection from '../components/sokoloff/FooterSection';
+import SectionNavigation from '../components/sokoloff/SectionNavigation';
+import { LanguageProvider } from '../components/sokoloff/LanguageContext';
+import LanguageToggle from '../components/sokoloff/LanguageToggle';
+
+export default function Home() {
+  const timelineRef = useRef(null);
+
+  const scrollToTimeline = () => {
+    timelineRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  return (
+    <LanguageProvider>
+    <div className="bg-black min-h-screen overflow-x-hidden scroll-smooth">
+      <Interactive3DBackground />
+      <LanguageToggle />
+      <SectionNavigation />
+      
+      <div id="hero">
+        <HeroSection onScrollToTimeline={scrollToTimeline} />
+      </div>
+      
+      <AboutSection />
+      
+      <div id="chronology">
+        <ChronologySection />
+      </div>
+      
+      <div id="timeline">
+        <TimelineSection scrollRef={timelineRef} />
+      </div>
+      
+      <InteractiveGallery />
+      
+      <div id="map">
+        <MapSection />
+      </div>
+      
+      <FullBiographySection />
+      
+      <BiographySection />
+      
+      <FooterSection />
+    </div>
+    </LanguageProvider>
+  );
+}
