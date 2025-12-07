@@ -1,17 +1,22 @@
 import React, { useRef } from 'react';
+import dynamic from 'next/dynamic';
+
 import Interactive3DBackground from '../components/sokoloff/Interactive3DBackground';
 import HeroSection from '../components/sokoloff/HeroSection';
 import AboutSection from '../components/sokoloff/AboutSection';
 import ChronologySection from '../components/sokoloff/ChronologySection';
 import TimelineSection from '../components/sokoloff/TimelineSection';
 import InteractiveGallery from '../components/sokoloff/InteractiveGallery';
-import MapSection from '../components/sokoloff/MapSection';
 import FullBiographySection from '../components/sokoloff/FullBiographySection';
 import BiographySection from '../components/sokoloff/BiographySection';
 import FooterSection from '../components/sokoloff/FooterSection';
 import SectionNavigation from '../components/sokoloff/SectionNavigation';
 import { LanguageProvider } from '../components/sokoloff/LanguageContext';
 import LanguageToggle from '../components/sokoloff/LanguageToggle';
+
+const MapSection = dynamic(() => import('../components/sokoloff/MapSection'), {
+  ssr: false,
+});
 
 export default function Home() {
   const timelineRef = useRef(null);
