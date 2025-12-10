@@ -26,7 +26,7 @@ const journeyConnections = [
   { from: 7, to: 8 }
 ];
 
-export default forwardRef(function InteractiveGlobe({ onLocationSelect, selectedLocation }, ref) {
+export default forwardRef(function InteractiveGlobe({ onLocationSelect, selectedLocation, showJourney }, ref) {
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
   const engineRef = useRef(null);
@@ -34,6 +34,7 @@ export default forwardRef(function InteractiveGlobe({ onLocationSelect, selected
   const cameraRef = useRef(null);
   const sceneRef = useRef(null);
   const journeyPlayingRef = useRef(false);
+  const journeyLinesRef = useRef([]);
 
   // Helper function to animate camera to a location
   const animateCameraToLocation = (lat, lng, zoom = 3.5, duration = 1500) => {
@@ -85,10 +86,18 @@ export default forwardRef(function InteractiveGlobe({ onLocationSelect, selected
     journeyPlayingRef.current = false;
   };
 
+  // Toggle journey line visibility
+  const toggleJourneyVisibility = (visible) => {
+    journeyLinesRef.current.forEach(line => {
+      line.isVisible = visible;
+    });
+  };
+
   // Expose camera and journey functions to parent
   useImperativeHandle(ref, () => ({
     animateCameraToLocation,
     playJourney,
+    toggleJourneyVisibility,
   }), []);
 
   useEffect(() => {
@@ -97,7 +106,7 @@ export default forwardRef(function InteractiveGlobe({ onLocationSelect, selected
     let engine = null;
     let resizeHandler = null;
 
-      const initScene = () => {
+    const initScene = () => {
       try {
         const width = containerRef.current.clientWidth;
         const height = containerRef.current.clientHeight;
@@ -119,12 +128,12 @@ export default forwardRef(function InteractiveGlobe({ onLocationSelect, selected
         camera.attachControl(canvasRef.current, true);
         camera.lowerRadiusLimit = 2;
         camera.upperRadiusLimit = 8;
-        camera.wheelPrecision = 200;
+        camera.wheelPrecision = 100; // Improved zoom sensitivity
         camera.minZ = 0.1;
         
         // Enhanced touch and mouse controls
-        camera.inertia = 0.85; // Smooth momentum scrolling
-        camera.angularSensibility = 500; // Adjust rotation speed (lower = faster)
+        camera.inertia = 0.8; // Smooth momentum scrolling
+        camera.angularSensibility = 1000; // Better rotation speed control
         camera.panningSensibility = 10; // Pan control sensitivity
         camera.useNaturalPinchZoom = true; // Native pinch-to-zoom on mobile
         camera.pinchToPanMaxDistance = 20; // Limit pan distance
@@ -148,14 +157,12 @@ export default forwardRef(function InteractiveGlobe({ onLocationSelect, selected
         }
         starTex.update();
         starMat.emissiveTexture = starTex;
-        // show starfield from inside the box
         starMat.backFaceCulling = false;
         starfield.material = starMat;
 
-        // Create a realistic earth using PBR material and external textures (CDN)
+        // Create a realistic earth using PBR material and external textures
         const earth = BABYLON.MeshBuilder.CreateSphere('earth', { diameter: 2, segments: 64 }, scene);
 
-        // Textures (CDN-hosted; can be swapped to local /public/textures/ later)
         const dayTex = new BABYLON.Texture('https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/land_ocean_ice_cloud_2048.jpg', scene);
         const normalTex = new BABYLON.Texture('https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_normal_2048.jpg', scene);
         const specTex = new BABYLON.Texture('https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_specular_2048.jpg', scene);
@@ -172,7 +179,7 @@ export default forwardRef(function InteractiveGlobe({ onLocationSelect, selected
         pbr.emissiveColor = new BABYLON.Color3(1, 1, 1);
         earth.material = pbr;
 
-        // Clouds layer (slightly larger transparent sphere)
+        // Clouds layer
         const clouds = BABYLON.MeshBuilder.CreateSphere('clouds', { diameter: 2.02, segments: 64 }, scene);
         const cloudMat = new BABYLON.StandardMaterial('cloudMat', scene);
         cloudMat.diffuseTexture = new BABYLON.Texture('https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_clouds_1024.png', scene);
@@ -183,7 +190,7 @@ export default forwardRef(function InteractiveGlobe({ onLocationSelect, selected
         clouds.material = cloudMat;
         clouds.parent = earth;
 
-        // Atmosphere glow via a slightly larger sphere and GlowLayer tweak
+        // Atmosphere glow
         const atmosphere = BABYLON.MeshBuilder.CreateSphere('atmos', { diameter: 2.08, segments: 32 }, scene);
         const atmMat = new BABYLON.StandardMaterial('atmMat', scene);
         atmMat.emissiveColor = new BABYLON.Color3(0.05, 0.12, 0.25);
@@ -197,7 +204,6 @@ export default forwardRef(function InteractiveGlobe({ onLocationSelect, selected
 
         scene.registerBeforeRender(() => {
           earth.rotation.y += 0.0006;
-          // slow cloud rotation
           if (clouds) {
             clouds.rotation.y += 0.0009;
           }
@@ -224,7 +230,7 @@ export default forwardRef(function InteractiveGlobe({ onLocationSelect, selected
           new BABYLON.GlowLayer('glow_' + idx, scene).addIncludedOnlyMesh(marker);
         });
 
-
+        // Create journey connection lines and track them
         journeyConnections.forEach((conn, idx) => {
           const from = locations[conn.from];
           const to = locations[conn.to];
@@ -261,6 +267,9 @@ export default forwardRef(function InteractiveGlobe({ onLocationSelect, selected
           ];
           lineMat.emissiveColor = colors[idx];
           line.material = lineMat;
+          line.isVisible = showJourney; // Set initial visibility
+
+          journeyLinesRef.current.push(line);
         });
 
         scene.onPointerObservable.add((pointerInfo) => {
@@ -279,7 +288,6 @@ export default forwardRef(function InteractiveGlobe({ onLocationSelect, selected
             if (hit?.hit?.metadata?.location) {
               const loc = hit.pickedMesh.metadata.location;
               onLocationSelect(loc);
-              // Animate camera to this location
               animateCameraToLocation(loc.lat, loc.lng, 3.5, 1500);
             }
           }
@@ -307,7 +315,12 @@ export default forwardRef(function InteractiveGlobe({ onLocationSelect, selected
       if (resizeHandler) window.removeEventListener('resize', resizeHandler);
       if (engine) engine.dispose();
     };
-  }, [onLocationSelect]);
+  }, [onLocationSelect, showJourney]);
+
+  // Update journey line visibility when showJourney changes
+  useEffect(() => {
+    toggleJourneyVisibility(showJourney);
+  }, [showJourney]);
 
   return (
     <div ref={containerRef} style={{ width: '100%', height: '100%', position: 'relative' }}>
@@ -324,6 +337,16 @@ export default forwardRef(function InteractiveGlobe({ onLocationSelect, selected
           </div>
         </div>
       )}
+
+      {/* On-screen globe controls */}
+      <div style={{ position: 'absolute', right: 12, top: 12, zIndex: 50, pointerEvents: 'auto' }}>
+        <div className="bg-zinc-950/95 backdrop-blur-sm rounded-lg p-3 border border-zinc-800 space-y-2 text-xs text-gray-400">
+          <p className="font-medium text-gray-300">Globe Controls:</p>
+          <p>🖱️ <strong>Drag</strong> to rotate</p>
+          <p>🔄 <strong>Scroll/Pinch</strong> to zoom</p>
+          <p>Right-click to pan</p>
+        </div>
+      </div>
     </div>
   );
 });
