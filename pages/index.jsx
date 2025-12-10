@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import dynamic from 'next/dynamic';
 
-const Interactive3DBackground = dynamic(() => import('../components/sokoloff/Interactive3DBackground'), { ssr: false });
+import Interactive3DBackground from '../components/sokoloff/Interactive3DBackground';
 import HeroSection from '../components/sokoloff/HeroSection';
 import AboutSection from '../components/sokoloff/AboutSection';
 import ChronologySection from '../components/sokoloff/ChronologySection';
@@ -10,7 +10,7 @@ import InteractiveGallery from '../components/sokoloff/InteractiveGallery';
 import FullBiographySection from '../components/sokoloff/FullBiographySection';
 import BiographySection from '../components/sokoloff/BiographySection';
 import FooterSection from '../components/sokoloff/FooterSection';
-const SectionNavigation = dynamic(() => import('../components/sokoloff/SectionNavigation'), { ssr: false });
+import SectionNavigation from '../components/sokoloff/SectionNavigation';
 import { LanguageProvider } from '../components/sokoloff/LanguageContext';
 import LanguageToggle from '../components/sokoloff/LanguageToggle';
 

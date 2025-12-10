@@ -8,8 +8,6 @@
     "start": "next start"
   },
   "dependencies": {
-    "@babylonjs/core": "^6.31.0",
-    "@babylonjs/loaders": "^6.31.0",
     "framer-motion": "^10.18.0",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.453.0",
