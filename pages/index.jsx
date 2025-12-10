@@ -18,6 +18,10 @@ const MapSection = dynamic(() => import('../components/sokoloff/MapSection'), {
   ssr: false,
 });
 
+const JourneyMap = dynamic(() => import('../components/sokoloff/JourneyMap'), {
+  ssr: false,
+});
+
 export default function Home() {
   const timelineRef = useRef(null);
 
@@ -48,8 +52,8 @@ export default function Home() {
       
       <InteractiveGallery />
       
-      <div id="map">
-        <MapSection />
+      <div id="journey">
+        <JourneyMap />
       </div>
       
       <FullBiographySection />
